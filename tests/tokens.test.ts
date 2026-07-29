@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-const css = readFileSync(new URL('../app/globals.css', import.meta.url), 'utf8');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const css = readFileSync(join(__dirname, '../app/globals.css'), 'utf8');
 
 const REQUIRED_TOKENS = [
   '--color-ink: #14181B',
