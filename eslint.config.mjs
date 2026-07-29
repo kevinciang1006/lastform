@@ -18,6 +18,11 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // Vendored third-party design export, not application source. `next
+      // lint` never covered this (it only scans pages/app/components/lib/src
+      // by default); calling the ESLint CLI directly on `.` would otherwise
+      // sweep it in and report on code we don't own.
+      "docs/**",
     ],
   },
 ];
