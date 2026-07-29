@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ROUTES, badgeLine, renderSpec, routeCounts } from '@/lib/rendering';
+import { ROUTES, badgeLine, formatStamp, renderSpec, routeCounts, windowLabelFor } from '@/lib/rendering';
 
 describe('route manifest', () => {
   it('gives every route a non-empty reasoning', () => {
@@ -59,10 +59,28 @@ describe('badgeLine', () => {
 });
 
 describe('routeCounts', () => {
-  it('counts static and dynamic routes from the manifest, not by hand', () => {
+  // Exact counts, not just a sum: folding CLIENT into the static branch would
+  // still sum to 10 and still be positive, and these numbers ship to /engineering.
+  it('classifies every route correctly', () => {
+    expect(routeCounts()).toEqual({ static: 5, dynamic: 5 });
+  });
+
+  it('accounts for every route in the manifest', () => {
     const counts = routeCounts();
     expect(counts.static + counts.dynamic).toBe(Object.keys(ROUTES).length);
-    expect(counts.static).toBeGreaterThan(0);
-    expect(counts.dynamic).toBeGreaterThan(0);
+  });
+});
+
+describe('windowLabelFor', () => {
+  it('labels each window kind', () => {
+    expect(windowLabelFor(renderSpec('product'))).toBe('REVALIDATE 300S');
+    expect(windowLabelFor(renderSpec('engineering'))).toBe('AT BUILD');
+    expect(windowLabelFor(renderSpec('search'))).toBe('NO-STORE');
+  });
+});
+
+describe('formatStamp', () => {
+  it('renders the mono house format, not an ISO string', () => {
+    expect(formatStamp(new Date('2026-07-28T09:14:02.000Z'))).toBe('2026-07-28 09:14:02 UTC');
   });
 });

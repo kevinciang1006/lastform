@@ -1,13 +1,33 @@
 export type RenderStrategy = 'SSG' | 'ISR' | 'SSR' | 'EDGE' | 'CLIENT';
 
-export interface RouteRenderSpec {
+interface RouteRenderBase {
   readonly route: string;
-  readonly strategy: RenderStrategy;
-  /** Seconds, or false where caching is impossible or incorrect. */
-  readonly revalidate: number | false;
   readonly reasoning: string;
   readonly onDemand: boolean;
 }
+
+/** ISR is defined by its window, so one is mandatory. */
+interface IsrRouteSpec extends RouteRenderBase {
+  readonly strategy: 'ISR';
+  readonly revalidate: number;
+}
+
+/** SSG may carry a window (Next re-renders the prerender) or none at all. */
+interface SsgRouteSpec extends RouteRenderBase {
+  readonly strategy: 'SSG';
+  readonly revalidate: number | false;
+}
+
+/** Nothing here is cacheable, so a window would be a false claim. */
+interface UncachedRouteSpec extends RouteRenderBase {
+  readonly strategy: 'SSR' | 'EDGE' | 'CLIENT';
+  readonly revalidate: false;
+}
+
+// A union, not a flat interface: this file's values render verbatim onto the
+// public /engineering page, so an ISR route with no window — or an edge route
+// claiming one — must fail to compile rather than fail review.
+export type RouteRenderSpec = IsrRouteSpec | SsgRouteSpec | UncachedRouteSpec;
 
 export type RouteKey =
   | 'home'
@@ -89,7 +109,7 @@ export const ROUTES: Readonly<Record<RouteKey, RouteRenderSpec>> = {
     route: 'middleware.ts',
     strategy: 'EDGE',
     revalidate: false,
-    reasoning: 'Runs before the cache on every request, which is exactly why it stays under fifteen lines of logic.',
+    reasoning: 'Runs before the cache on every request, which is exactly why it stays this cheap: two header reads and two cookie writes, with no I/O.',
     onDemand: false,
   },
 };
