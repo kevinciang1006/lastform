@@ -48,6 +48,9 @@ importers:
       '@playwright/test':
         specifier: ^1.62.0
         version: 1.62.0
+      '@portabletext/types':
+        specifier: ^4.0.2
+        version: 4.0.2
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.3.3

@@ -29,6 +29,7 @@
     "@axe-core/playwright": "^4.12.1",
     "@eslint/eslintrc": "^3",
     "@playwright/test": "^1.62.0",
+    "@portabletext/types": "^4.0.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20.19.43",
     "@types/react": "^19",
