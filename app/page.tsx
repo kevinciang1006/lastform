@@ -1,7 +1,16 @@
-export default function Home() {
+import { SiteFooter } from '@/components/chrome/SiteFooter';
+
+// Editorial content changes hourly at most; see ROUTES.home in lib/rendering
+// for the reasoning. Must stay a literal — Next.js statically analyses this
+// export, so it can't be renderSpec('home').revalidate. Kept honest by
+// tests/revalidate-drift.test.ts.
+export const revalidate = 3600;
+
+export default function HomePage() {
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <h1 className="text-2xl font-semibold">Lastform</h1>
-    </main>
+    <>
+      <h1 className="sr-only">Lastform</h1>
+      <SiteFooter routeKey="home" />
+    </>
   );
 }
