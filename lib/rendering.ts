@@ -109,7 +109,7 @@ export const ROUTES: Readonly<Record<RouteKey, RouteRenderSpec>> = {
     route: 'middleware.ts',
     strategy: 'EDGE',
     revalidate: false,
-    reasoning: 'Runs before the cache on every request, which is exactly why it stays this cheap: two header reads and two cookie writes, with no I/O.',
+    reasoning: 'Runs before the cache on every request, which is exactly why it stays this cheap: one header read, at most two cookie writes, and no I/O at all.',
     onDemand: false,
   },
 };
