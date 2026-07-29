@@ -1,26 +1,61 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-ink: #14181B;
+  --color-chalk: #E9E9E4;
+  --color-slate: #5A6167;
+  --color-cobalt: #1B3BD9;
+  --color-ochre: #C4842B;
+  --color-fog: #D6D7D1;
+
+  --font-display: var(--font-archivo), "Helvetica Neue", sans-serif;
+  --font-body: var(--font-inter-tight), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  --text-spec: 0.5625rem;
+  --text-meta: 0.625rem;
+  --text-value: 0.8125rem;
+  --text-body: 0.9375rem;
+  --text-h3: 1.625rem;
+  --text-h2: 2.625rem;
+  --text-h1: 3.5rem;
+  --text-hero: 4rem;
+
+  --tracking-mono: 0.16em;
+  --tracking-display: -0.035em;
+  --leading-body: 1.65;
+
+  --radius-dot: 9999px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    background: var(--color-chalk);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* The design removes radius everywhere; callout dots opt back in explicitly. */
+  *,
+  *::before,
+  *::after {
+    border-radius: 0;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-cobalt);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
 }
