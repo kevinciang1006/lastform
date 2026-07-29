@@ -51,7 +51,10 @@ export const productSchema = z.object({
   title: z.string().min(1),
   slug: z.string().min(1),
   price: z.number().positive(),
-  currency: z.string().length(3),
+  /** ISO-4217 shape, deliberately not the four-value display-currency union:
+   *  a product may be priced in a currency the storefront does not localise,
+   *  and that should render as-is rather than fail at the content boundary. */
+  currency: z.string().regex(/^[A-Z]{3}$/),
   colour: z.string().min(1),
   material: z.string().min(1),
   upperMm: z.number().positive(),
@@ -70,22 +73,16 @@ export const productSchema = z.object({
 });
 export type Product = z.infer<typeof productSchema>;
 
-export const productCardSchema = z.object({
-  id: z.string().min(1),
-  sku: z.string().min(1),
-  title: z.string().min(1),
-  slug: z.string().min(1),
-  price: z.number().positive(),
-  currency: z.string().length(3),
-  colour: z.string().min(1),
-  material: z.string().min(1),
-  lastShape: z.string().min(1),
-  dropMm: z.number().min(0),
-  weightGrams: z.number().int().positive(),
-  image: imageRefSchema,
-  featured: z.boolean(),
-  variants: z.array(variantSchema).min(1),
-});
+// Projected from productSchema rather than redeclared: a card is a subset of a
+// product, and two hand-maintained copies drift the moment a validator changes
+// on one side. Both adapters must satisfy both shapes, so they must stay welded.
+export const productCardSchema = productSchema
+  .pick({
+    id: true, sku: true, title: true, slug: true, price: true, currency: true,
+    colour: true, material: true, lastShape: true, dropMm: true,
+    weightGrams: true, featured: true, variants: true,
+  })
+  .extend({ image: imageRefSchema });
 export type ProductCard = z.infer<typeof productCardSchema>;
 
 export const collectionSchema = z.object({
@@ -111,7 +108,9 @@ export const journalPostSchema = z.object({
   slug: z.string().min(1),
   excerpt: z.string().min(1),
   coverImage: imageRefSchema,
-  publishedAt: z.string().min(1),
+  /** ISO 8601, not any non-empty string: "next week" would pass .min(1) and
+   *  then fail silently at sort time, far from the boundary that admitted it. */
+  publishedAt: z.string().datetime(),
   body: portableTextSchema,
 });
 export type JournalPost = z.infer<typeof journalPostSchema>;
