@@ -10,7 +10,7 @@ import {
   type JournalDocument,
   type ProductDocument,
   type SiteSettingsDocument,
-} from '../scripts/seed';
+} from '@/lib/content/seed-documents';
 import { DEFAULT_SITE_SETTINGS } from '@/lib/content/defaults';
 import { COLLECTIONS, JOURNAL_POSTS, PRODUCTS } from '@/lib/content/fixtures/data';
 import {
