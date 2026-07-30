@@ -43,7 +43,7 @@ const FOOTER_COLUMNS: readonly FooterColumnData[] = [
 
 function FooterColumn({ column }: { readonly column: FooterColumnData }) {
   return (
-    <div className="flex flex-col gap-[11px] font-mono text-meta tracking-[0.14em]">
+    <div className="flex flex-col gap-[11px] font-mono text-meta tracking-meta">
       <h2 className="text-ink">{column.heading}</h2>
       <ul className="flex flex-col gap-[11px]">
         {column.links.map((link) => (
@@ -69,7 +69,7 @@ export function SiteFooter({ routeKey }: { readonly routeKey: RouteKey }) {
           <p className="w-fit font-display text-[18px] font-extrabold text-ink [font-variation-settings:'wdth'_116]">
             LASTFORM
           </p>
-          <address className="font-mono text-meta not-italic leading-[2] tracking-[0.14em] text-slate">
+          <address className="font-mono text-meta not-italic leading-[2] tracking-meta text-slate">
             WORKSHOP 12 — SE MORRISON
             <br />
             PORTLAND OR 97214
@@ -81,7 +81,7 @@ export function SiteFooter({ routeKey }: { readonly routeKey: RouteKey }) {
       </div>
       <div className="flex items-end justify-between border-t border-fog pt-5">
         {/* Hardcoded until Task 16, same as FOOTER_COLUMNS above. */}
-        <p className="font-mono text-meta tracking-[0.14em] text-slate">© 2026 LASTFORM LLC</p>
+        <p className="font-mono text-meta tracking-meta text-slate">© 2026 LASTFORM LLC</p>
         <RenderBadge routeKey={routeKey} />
       </div>
     </footer>

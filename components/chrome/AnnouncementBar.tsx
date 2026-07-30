@@ -6,7 +6,7 @@ export function AnnouncementBar({ messages }: { readonly messages: readonly stri
   const lastIndex = messages.length - 1;
 
   return (
-    <div className="flex h-[38px] items-center justify-center gap-6 bg-ink font-mono text-meta tracking-[0.18em] text-chalk">
+    <div className="flex h-[38px] items-center justify-center gap-6 bg-ink font-mono text-meta tracking-wide text-chalk">
       {messages.map((message, index) => (
         <Fragment key={message}>
           {index > 0 ? (

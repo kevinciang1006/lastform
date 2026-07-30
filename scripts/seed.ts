@@ -7,7 +7,6 @@ import {
   buildJournalDocument,
   buildProductDocument,
   buildSiteSettingsDocument,
-  fileNameOf,
   imageFileNames,
   type AssetIds,
   type SeedDocument,

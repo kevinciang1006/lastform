@@ -21,12 +21,27 @@
   --text-h1: 3.5rem;
   --text-hero: 4rem;
 
+  /* Named for the role each plays in the design, not for its value. Every one
+     below appears at least eleven times in the design export; the remaining
+     one-off values stay as arbitrary utilities rather than pretending to be
+     part of the system. */
   --tracking-mono: 0.16em;
+  --tracking-meta: 0.14em;
+  --tracking-wide: 0.18em;
+  --tracking-eyebrow: 0.2em;
+  --tracking-value: 0.04em;
   --tracking-display: -0.035em;
   --leading-body: 1.65;
 
   --radius-dot: 9999px;
 }
+
+/* The design's token sheet also lists --border-hair/-rule/-focus/-active and
+   --radius-none. They are deliberately absent: Tailwind v4 has no border-width
+   theme namespace, so those would generate no utility and become variables
+   nothing consumes. Verified by building with one declared and confirming no
+   .border-hair rule is emitted. A 1px hairline is `border border-fog`, and the
+   base layer below already forces radius 0 everywhere. */
 
 @layer base {
   html {

@@ -33,7 +33,7 @@ export function RenderBadge({ routeKey }: { readonly routeKey: RouteKey }) {
           in prose — exposing both would read it twice, once as token soup. */}
       <p
         aria-hidden="true"
-        className="flex items-center gap-[10px] px-[14px] py-[9px] font-mono text-meta tracking-[0.14em] text-slate"
+        className="flex items-center gap-[10px] px-[14px] py-[9px] font-mono text-meta tracking-meta text-slate"
       >
         <span>RENDERED</span>
         <span className="text-cobalt">{spec.strategy}</span>
@@ -54,7 +54,7 @@ export function RenderBadge({ routeKey }: { readonly routeKey: RouteKey }) {
         data-generated-at={generatedAt.toISOString()}
         data-revalidate={spec.revalidate === false ? '' : String(spec.revalidate)}
         data-strategy={spec.strategy}
-        className="flex items-center gap-[7px] bg-cobalt px-3 py-[9px] font-mono text-meta tracking-[0.14em] text-chalk"
+        className="flex items-center gap-[7px] bg-cobalt px-3 py-[9px] font-mono text-meta tracking-meta text-chalk"
       >
         <span aria-hidden="true" className="block size-[5px] rounded-[var(--radius-dot)] bg-chalk" />
         FRESH
