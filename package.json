@@ -22,6 +22,8 @@
     "next-sanity": "^13.2.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "sanity": "^6.7.0",
+    "styled-components": "^6.4.4",
     "web-vitals": "^6.0.1",
     "zod": "^4.4.3",
     "zustand": "^5.0.14"
