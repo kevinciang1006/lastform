@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ProductQuery } from '@/lib/facets';
+import { DEFAULT_SITE_SETTINGS } from '@/lib/content/defaults';
 import {
   collectionCardSchema,
   collectionSchema,
@@ -213,12 +214,15 @@ export function sanitySource(): ContentSource {
 
     async getSiteSettings(): Promise<SiteSettings> {
       const raw = await sanityClient().fetch<RawSiteSettings | null>(SITE_SETTINGS_QUERY);
-      // No empty fallback: announcements requires at least one entry and the
-      // interface returns a non-nullable SiteSettings, so there is no valid
-      // "empty" shape to hand back. A missing singleton is a real
-      // misconfiguration and should fail the parse loudly, the same as any
-      // other content that doesn't match its schema.
-      return siteSettingsSchema.parse(raw);
+      // A missing singleton — unseeded, or between provisioning a project and
+      // running the Task 12 seed script — falls back to the same known-good
+      // chrome fixtures use, rather than throwing on every route until
+      // someone publishes the document. footerColumns/featuredCollections
+      // are already coalesced to [] in the projection for the "document
+      // exists but isn't fully filled in yet" case; announcementBar has no
+      // such fallback because siteSettingsSchema requires at least one entry
+      // and there is no honest non-empty default for editorial copy.
+      return siteSettingsSchema.parse(raw ?? DEFAULT_SITE_SETTINGS);
     },
 
     async searchProducts(term): Promise<ProductCard[]> {

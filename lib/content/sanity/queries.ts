@@ -54,22 +54,34 @@ export const PRODUCT_PROJECTION = groq`{
   weightGrams,
   "collectionSlug": collection->slug.current,
   "collectionTitle": collection->title,
-  "images": images[]{
+  // GROQ returns null, not [], for an array field the document never set —
+  // and a product with no annotation callouts or no description yet is a
+  // normal editorial state, not malformed data. coalesce() turns "field was
+  // never touched" into the same empty array Zod already accepts, so it
+  // parses instead of failing on a type it was always going to allow anyway.
+  "images": coalesce(images[]{
     alt,
     "asset": asset->{ url, metadata { lqip, dimensions { width, height } } }
-  },
-  description,
+  }, []),
+  "description": coalesce(description, []),
   variants[]{ size, stock },
-  annotations[]{ label, value, x, y },
-  materials[]{ label, value },
-  construction[]{ label, value },
+  "annotations": coalesce(annotations[]{ label, value, x, y }, []),
+  "materials": coalesce(materials[]{ label, value }, []),
+  "construction": coalesce(construction[]{ label, value }, []),
   featured
 }`;
 
 export const PRODUCT_BY_SLUG_QUERY = groq`*[_type == "product" && slug.current == $slug][0] ${PRODUCT_PROJECTION}`;
-export const FEATURED_PRODUCT_QUERY = groq`*[_type == "product" && featured == true][0] ${PRODUCT_PROJECTION}`;
-export const ALL_PRODUCTS_QUERY = groq`*[_type == "product"] ${PRODUCT_PROJECTION}`;
-export const PRODUCT_SLUGS_QUERY = groq`*[_type == "product"]{ "slug": slug.current }`;
+// Ordered even though at most one document should ever be featured=true:
+// without order(), [0] over an unordered match set is nondeterministic the
+// moment a second document is (even temporarily, mid-edit) also featured.
+export const FEATURED_PRODUCT_QUERY = groq`*[_type == "product" && featured == true] | order(title asc)[0] ${PRODUCT_PROJECTION}`;
+// order() here isn't cosmetic: listRelated() and listCollections() slice
+// this result, and GROQ makes no ordering guarantee without one — the
+// fixture adapter sorts the same way before doing the same slicing, so the
+// two adapters select the same products.
+export const ALL_PRODUCTS_QUERY = groq`*[_type == "product"] | order(title asc) ${PRODUCT_PROJECTION}`;
+export const PRODUCT_SLUGS_QUERY = groq`*[_type == "product"] | order(title asc){ "slug": slug.current }`;
 export const PRODUCT_STOCK_QUERY = groq`*[_type == "product" && slug.current == $slug][0].variants[]{ size, stock }`;
 
 // ---------------------------------------------------------------------------
@@ -122,7 +134,11 @@ export interface RawCollection {
   readonly title: string;
   readonly slug: string;
   readonly blurb: string;
-  readonly heroImage: RawImage;
+  // Nullable: GROQ returns null for heroImage{...} when the field is unset,
+  // not an empty object. imageRefFrom(null) turns that into a clean
+  // collectionSchema parse failure naming the field, rather than a
+  // TypeError thrown before Zod ever sees it.
+  readonly heroImage: RawImage | null;
   readonly sortOrder: number;
 }
 
@@ -151,7 +167,8 @@ export interface RawJournalPost {
   readonly title: string;
   readonly slug: string;
   readonly excerpt: string;
-  readonly coverImage: RawImage;
+  // Nullable for the same reason RawCollection.heroImage is.
+  readonly coverImage: RawImage | null;
   readonly publishedAt: string;
   readonly body: readonly PortableTextBlock[];
 }
@@ -166,12 +183,12 @@ export const JOURNAL_PROJECTION = groq`{
     "asset": asset->{ url, metadata { lqip, dimensions { width, height } } }
   },
   publishedAt,
-  body
+  "body": coalesce(body, [])
 }`;
 
 export const JOURNAL_BY_SLUG_QUERY = groq`*[_type == "journalPost" && slug.current == $slug][0] ${JOURNAL_PROJECTION}`;
 export const JOURNAL_LIST_QUERY = groq`*[_type == "journalPost"] | order(publishedAt desc) ${JOURNAL_PROJECTION}`;
-export const JOURNAL_SLUGS_QUERY = groq`*[_type == "journalPost"]{ "slug": slug.current }`;
+export const JOURNAL_SLUGS_QUERY = groq`*[_type == "journalPost"] | order(title asc){ "slug": slug.current }`;
 
 // ---------------------------------------------------------------------------
 // Site settings (singleton)
@@ -191,11 +208,11 @@ export interface RawSiteSettings {
 
 export const SITE_SETTINGS_PROJECTION = groq`{
   "announcements": announcementBar,
-  "footerColumns": footerColumns[]{
+  "footerColumns": coalesce(footerColumns[]{
     title,
     "links": links[]{ label, href }
-  },
-  "featuredCollectionSlugs": featuredCollections[]->slug.current
+  }, []),
+  "featuredCollectionSlugs": coalesce(featuredCollections[]->slug.current, [])
 }`;
 
 export const SITE_SETTINGS_QUERY = groq`*[_type == "siteSettings"][0] ${SITE_SETTINGS_PROJECTION}`;
@@ -247,17 +264,19 @@ function filterClause(query: ProductQuery, params: Record<string, unknown>): str
   return clauses.join(' && ');
 }
 
+// Every ordering carries a title tie-break — the same final tie-break
+// byTitle() applies in applyFacets. Four products in the fixture catalogue
+// share a price with another product, so without this, GROQ's order for
+// ties is unspecified and could disagree with the fixture adapter's.
 function orderClause(sort: SortKey): string {
   switch (sort) {
     case 'price-asc':
-      return 'price asc';
+      return 'price asc, title asc';
     case 'price-desc':
-      return 'price desc';
+      return 'price desc, title asc';
     case 'weight-asc':
-      return 'weightGrams asc';
+      return 'weightGrams asc, title asc';
     case 'featured':
-      // The same final tie-break byTitle() applies in applyFacets, so two
-      // featured products never swap order between requests.
       return 'featured desc, title asc';
   }
 }

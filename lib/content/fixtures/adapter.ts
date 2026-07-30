@@ -95,17 +95,22 @@ export function fixtureSource(): ContentSource {
 
     async listRelated(product: Product, limit: number): Promise<RelatedProducts> {
       const cap = Math.max(0, limit);
+      // Sorted by title before filtering, so both adapters pick the same
+      // products in the same order — the Sanity adapter fetches products via
+      // a query explicitly ordered the same way, since GROQ makes no
+      // ordering guarantee otherwise, and both then `.slice(0, cap)`.
+      const byTitle = [...PRODUCTS].sort((a, b) => a.title.localeCompare(b.title));
       // Same last first, because that is the measurement a buyer is comparing.
-      const sameLast = PRODUCTS.filter((p) => p.lastShape === product.lastShape && p.slug !== product.slug);
+      const sameLast = byTitle.filter((p) => p.lastShape === product.lastShape && p.slug !== product.slug);
       if (sameLast.length >= cap) {
         return { items: sameLast.slice(0, cap).map(toProductCard), basis: 'last' };
       }
 
-      // Two products are the only ones on their last. Topping up from the
+      // Some products are the only ones on their last. Topping up from the
       // collection keeps the strip populated, and downgrading the basis stops
       // the PDP claiming a shared last these additions do not have.
       const taken = new Set(sameLast.map((p) => p.slug));
-      const topUp = PRODUCTS.filter(
+      const topUp = byTitle.filter(
         (p) => p.collectionSlug === product.collectionSlug && p.slug !== product.slug && !taken.has(p.slug),
       );
       const items = [...sameLast, ...topUp].slice(0, cap).map(toProductCard);
@@ -142,7 +147,12 @@ export function fixtureSource(): ContentSource {
       // An empty query returns nothing rather than the whole catalogue: the
       // search page has a distinct "no query yet" state for that.
       if (needle === '') return [];
-      return PRODUCTS.filter((p) => p.title.toLowerCase().includes(needle)).map(toProductCard);
+      const matches = PRODUCTS.filter((p) => p.title.toLowerCase().includes(needle)).map(toProductCard);
+      // Sorted the same way the Sanity adapter's search query returns
+      // results, reusing applyFacets' own "featured" comparator rather than
+      // duplicating its tie-break logic here. No facet is actually applied —
+      // every argument but sort is empty/null, so this only sorts.
+      return applyFacets(matches, { sizes: [], colours: [], materials: [], priceBand: null, sort: 'featured' });
     },
   };
 }

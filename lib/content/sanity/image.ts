@@ -37,11 +37,19 @@ function urlBuilder(): ReturnType<typeof createImageUrlBuilder> {
  * derive the asset id from the already-resolved CDN URL, so this needs no
  * extra round trip beyond the one the projection already made.
  *
- * A null asset (an image field an editor added but never uploaded into)
- * produces an object that fails `imageRefSchema` with a clear validation
- * error instead of throwing a bare TypeError on `.url`.
+ * `source` itself is nullish whenever the whole image field is unset on the
+ * document (GROQ returns `null` for `field{...}` when `field` is absent) —
+ * callers decide whether that's acceptable by feeding the null straight into
+ * a schema: required image fields (heroImage, coverImage) then fail with a
+ * clear "expected object, received null" instead of a TypeError here.
+ *
+ * A present wrapper with a null `asset` (an image field an editor added but
+ * never uploaded into) is a different case and stays a "real" object that
+ * fails `imageRefSchema`'s own field checks, so that error names the exact
+ * field (url/width/height) rather than just "received null".
  */
-export function imageRefFrom(source: RawImage): ImageRef {
+export function imageRefFrom(source: RawImage | null): ImageRef | null {
+  if (!source) return null;
   const { asset } = source;
   return imageRefSchema.parse({
     url: asset ? urlBuilder().image({ asset: { url: asset.url } }).url() : '',
