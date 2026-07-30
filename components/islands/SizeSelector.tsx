@@ -1,13 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { stockState, variantSchema, type Variant } from '@/lib/content/schema';
+import { stockState, variantSchema, type ImageRef, type Variant } from '@/lib/content/schema';
+import { useCart } from '@/lib/cart/store';
 
 interface SizeSelectorProps {
+  readonly productId: string;
   readonly slug: string;
+  readonly title: string;
+  readonly price: number;
+  readonly currency: string;
+  readonly image: ImageRef;
   /** From the ISR snapshot, so the grid is complete in the server HTML. */
   readonly variants: readonly Variant[];
-  readonly onSelect?: (size: number | null) => void;
 }
 
 const CELL_BASE =
@@ -61,9 +66,10 @@ function SizeCell({
  * and replaces the grid only if the answer differs. First paint is complete
  * from the server snapshot, so nothing shifts and nothing blocks.
  */
-export function SizeSelector({ slug, variants, onSelect }: SizeSelectorProps) {
+export function SizeSelector({ productId, slug, title, price, currency, image, variants }: SizeSelectorProps) {
   const [live, setLive] = useState<readonly Variant[]>(variants);
   const [selected, setSelected] = useState<number | null>(null);
+  const add = useCart((state) => state.add);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -90,9 +96,7 @@ export function SizeSelector({ slug, variants, onSelect }: SizeSelectorProps) {
   }, [slug]);
 
   const choose = (size: number): void => {
-    const next = selected === size ? null : size;
-    setSelected(next);
-    onSelect?.(next);
+    setSelected(selected === size ? null : size);
   };
 
   return (
@@ -113,6 +117,19 @@ export function SizeSelector({ slug, variants, onSelect }: SizeSelectorProps) {
           />
         ))}
       </div>
+
+      <button
+        type="button"
+        data-testid="add-to-cart"
+        disabled={selected === null}
+        onClick={() => {
+          if (selected === null) return;
+          add({ productId, slug, title, size: selected, price, currency, image, qty: 1 });
+        }}
+        className="w-full border border-cobalt bg-cobalt px-4 py-[17px] font-mono text-[11px] tracking-eyebrow text-chalk disabled:cursor-not-allowed disabled:border-fog disabled:bg-fog disabled:text-slate"
+      >
+        {selected === null ? 'SELECT A SIZE' : `ADD TO CART — EU ${selected}`}
+      </button>
     </div>
   );
 }

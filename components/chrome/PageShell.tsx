@@ -1,6 +1,8 @@
 import { AnnouncementBar } from '@/components/chrome/AnnouncementBar';
 import { SiteFooter } from '@/components/chrome/SiteFooter';
 import { SiteHeader } from '@/components/chrome/SiteHeader';
+import { CartDrawer } from '@/components/islands/CartDrawer';
+import { ClientPrefs } from '@/components/islands/ClientPrefs';
 import { contentSource } from '@/lib/content';
 import type { RouteKey } from '@/lib/rendering';
 
@@ -28,13 +30,14 @@ export async function PageShell({ routeKey, activeHref, children }: PageShellPro
   const settings = await contentSource().getSiteSettings();
 
   return (
-    <>
+    <ClientPrefs>
       <AnnouncementBar messages={settings.announcements} />
       <SiteHeader activeHref={activeHref} />
       <main id="main-content" tabIndex={-1}>
         {children}
       </main>
       <SiteFooter routeKey={routeKey} columns={settings.footerColumns} />
-    </>
+      <CartDrawer />
+    </ClientPrefs>
   );
 }

@@ -1,8 +1,9 @@
 import Link from 'next/link';
+import { CartButton } from '@/components/islands/CartButton';
 import { SiteNav } from '@/components/chrome/SiteNav';
 
 // Lastform.dc.html:39-52 — three-column grid, wordmark left, nav centred,
-// utility links right. `activeHref` has no caller yet; see SiteNav for why.
+// utility links right. `activeHref` comes from whichever PageShell renders it.
 export function SiteHeader({ activeHref }: { readonly activeHref?: string }) {
   return (
     <header className="grid grid-cols-[1fr_auto_1fr] items-center border-b border-ink px-10 py-5">
@@ -17,11 +18,7 @@ export function SiteHeader({ activeHref }: { readonly activeHref?: string }) {
         <Link href="/search" className="text-slate hover:text-cobalt">
           SEARCH
         </Link>
-        <Link href="/cart" className="flex items-center gap-[6px] text-ink hover:text-cobalt">
-          <span>CART</span>
-          {/* Static placeholder: the cart count becomes a client island in Task 23. */}
-          <span className="text-cobalt">[00]</span>
-        </Link>
+        <CartButton />
       </div>
     </header>
   );

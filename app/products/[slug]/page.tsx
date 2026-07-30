@@ -147,18 +147,20 @@ export default async function ProductPage({ params }: { params: Params }) {
 
           <PriceTag amount={product.price} currency={product.currency} size="lg" note="INCL. RESOLE 1" />
 
-          <SizeSelector slug={product.slug} variants={product.variants} />
+          {primaryImage ? (
+            <SizeSelector
+              productId={product.id}
+              slug={product.slug}
+              title={product.title}
+              price={product.price}
+              currency={product.currency}
+              image={primaryImage}
+              variants={product.variants}
+            />
+          ) : null}
           <StockLegend />
 
           <div className="flex flex-col gap-3">
-            <button
-              type="button"
-              disabled
-              data-testid="add-to-cart"
-              className="w-full border border-cobalt bg-cobalt px-4 py-[17px] font-mono text-[11px] tracking-eyebrow text-chalk disabled:cursor-not-allowed disabled:border-fog disabled:bg-fog disabled:text-slate"
-            >
-              SELECT A SIZE
-            </button>
             <p className="flex justify-between font-mono text-spec tracking-[0.13em] text-slate">
               <span>SHIPS IN 2 BUSINESS DAYS</span>
               <span>60 DAY RETURN</span>
