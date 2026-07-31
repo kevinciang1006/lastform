@@ -8,6 +8,15 @@
   --color-ochre: #C4842B;
   --color-fog: #D6D7D1;
 
+  /* Dark-surface variants. The design's signal cobalt is 2.27:1 on ink and its
+     slate is 2.84:1 — both well under the 4.5:1 WCAG AA floor — so anything
+     sitting on an ink background uses these instead. The design export already
+     reaches for a lighter grey on its dark panels (#8B9298); this makes that
+     systematic and gives cobalt the same treatment. Measured: 5.34:1 and
+     5.66:1 against #14181B. */
+  --color-cobalt-lift: #6E85F0;
+  --color-slate-lift: #8B9298;
+
   --font-display: var(--font-archivo), "Helvetica Neue", sans-serif;
   --font-body: var(--font-inter-tight), system-ui, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;

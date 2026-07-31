@@ -10,11 +10,11 @@ export function AnnouncementBar({ messages }: { readonly messages: readonly stri
       {messages.map((message, index) => (
         <Fragment key={message}>
           {index > 0 ? (
-            <span aria-hidden="true" className="text-slate">
+            <span aria-hidden="true" className="text-slate-lift">
               ·
             </span>
           ) : null}
-          <span className={index === lastIndex ? 'text-cobalt' : undefined}>{message}</span>
+          <span className={index === lastIndex ? 'text-cobalt-lift' : undefined}>{message}</span>
         </Fragment>
       ))}
     </div>

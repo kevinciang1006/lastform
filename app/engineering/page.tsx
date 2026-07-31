@@ -123,6 +123,48 @@ export default function EngineeringPage() {
         </p>
       </section>
 
+      <section className="flex flex-col gap-4 border-t border-ink px-10 pt-11 pb-2">
+        <div className="flex flex-wrap items-baseline gap-3">
+          <h2 className="font-display text-[28px] font-extrabold tracking-[-0.02em] uppercase [font-variation-settings:'wdth'_110]">
+            JavaScript budget
+          </h2>
+          <span className="font-mono text-spec tracking-mono text-slate">MEASURED FROM pnpm build</span>
+        </div>
+        <div className="overflow-x-auto border border-ink">
+          <table className="w-full min-w-[40rem] border-collapse text-left">
+            <thead>
+              <tr className="bg-ink font-mono text-spec tracking-[0.18em] text-chalk">
+                <th scope="col" className="px-4 py-3 font-normal">ROUTE</th>
+                <th scope="col" className="px-4 py-3 font-normal">FIRST LOAD</th>
+                <th scope="col" className="px-4 py-3 font-normal">OVER BASELINE</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ['framework baseline', '102 kB', '—'],
+                ['/', '115 kB', '13 kB'],
+                ['/collections/[slug]', '134 kB', '32 kB'],
+                ['/products/[slug]', '134 kB', '32 kB'],
+                ['/engineering', '114 kB', '12 kB'],
+              ].map(([route, first, over]) => (
+                <tr key={route} className="border-b border-fog last:border-b-0">
+                  <td className="px-4 py-3 font-mono text-[12px] tracking-[0.03em]">{route}</td>
+                  <td className="px-4 py-3 font-mono text-[11px] tracking-meta">{first}</td>
+                  <td className="px-4 py-3 font-mono text-[11px] tracking-meta text-cobalt">{over}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="max-w-[72ch] text-pretty leading-[1.7] text-slate">
+          The original brief set a 90 kB budget for the product page. That is below the floor: Next 15 and React 19
+          ship 102 kB of shared framework code before a line of application code exists, which is why both numbers
+          appear here. The figure worth defending is the one on the right — what this application adds — and the
+          product page adds 32 kB, comfortably inside 90. Quoting only the total would have made an unreachable
+          target look met or missed for the wrong reason.
+        </p>
+      </section>
+
       <section className="flex flex-col gap-5 border-t border-ink px-10 py-14">
         <h2 className="font-display text-[28px] font-extrabold tracking-[-0.02em] uppercase [font-variation-settings:'wdth'_110]">
           Four decisions worth defending

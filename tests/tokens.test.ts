@@ -13,6 +13,8 @@ const REQUIRED_TOKENS = [
   '--color-cobalt: #1B3BD9',
   '--color-ochre: #C4842B',
   '--color-fog: #D6D7D1',
+  '--color-cobalt-lift: #6E85F0',
+  '--color-slate-lift: #8B9298',
   // Values, not just names: a token whose name survives while its value is
   // silently changed is the drift this contract exists to catch.
   '--font-display: var(--font-archivo)',
