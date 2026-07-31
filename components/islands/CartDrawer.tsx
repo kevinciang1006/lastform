@@ -2,15 +2,14 @@
 
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
-import { cartSubtotal, useCart } from '@/lib/cart/store';
-import { useClientPrefs } from '@/components/islands/ClientPrefs';
+import { cartCurrency, cartSubtotal, useCart } from '@/lib/cart/store';
+import { CurrencyNote } from '@/components/islands/CurrencyNote';
 import { formatMoney } from '@/lib/format';
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input, select, [tabindex]:not([tabindex="-1"])';
 
 export function CartDrawer() {
   const { lines, isOpen, announcement, setOpen, setQty, remove } = useCart();
-  const { currency } = useClientPrefs();
   const panelRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<Element | null>(null);
 
@@ -57,6 +56,7 @@ export function CartDrawer() {
   }, [isOpen]);
 
   const subtotal = cartSubtotal(lines);
+  const priced = cartCurrency(lines);
 
   return (
     <>
@@ -149,8 +149,11 @@ export function CartDrawer() {
             <div className="flex flex-col gap-4 border-t border-ink px-6 py-5">
               <div className="flex items-baseline justify-between font-mono text-meta tracking-meta">
                 <span className="text-slate">SUBTOTAL</span>
-                <span className="text-[16px] tracking-value text-ink">{formatMoney(subtotal, currency)}</span>
+                <span className="text-[16px] tracking-value text-ink">
+                  {priced === null ? 'MIXED CURRENCIES' : formatMoney(subtotal, priced)}
+                </span>
               </div>
+              <CurrencyNote priced={priced} />
               {/* Said plainly rather than buried in a policy page. */}
               <p className="font-mono text-spec leading-[1.9] tracking-[0.13em] text-slate">
                 DEMONSTRATION ONLY — NO PAYMENT IS PROCESSED AND NO ORDER IS PLACED.

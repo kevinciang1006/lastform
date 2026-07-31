@@ -144,7 +144,7 @@ export default function EngineeringPage() {
                 ['framework baseline', '102 kB', '—'],
                 ['/', '115 kB', '13 kB'],
                 ['/collections/[slug]', '134 kB', '32 kB'],
-                ['/products/[slug]', '134 kB', '32 kB'],
+                ['/products/[slug]', '135 kB', '33 kB'],
                 ['/engineering', '114 kB', '12 kB'],
               ].map(([route, first, over]) => (
                 <tr key={route} className="border-b border-fog last:border-b-0">
@@ -160,7 +160,7 @@ export default function EngineeringPage() {
           The original brief set a 90 kB budget for the product page. That is below the floor: Next 15 and React 19
           ship 102 kB of shared framework code before a line of application code exists, which is why both numbers
           appear here. The figure worth defending is the one on the right — what this application adds — and the
-          product page adds 32 kB, comfortably inside 90. Quoting only the total would have made an unreachable
+          product page adds 33 kB, comfortably inside 90. Quoting only the total would have made an unreachable
           target look met or missed for the wrong reason.
         </p>
       </section>

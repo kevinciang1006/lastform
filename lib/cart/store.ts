@@ -24,6 +24,22 @@ export function cartSubtotal(lines: readonly CartLine[]): number {
   return lines.reduce((total, line) => total + line.price * line.qty, 0);
 }
 
+/**
+ * The currency a subtotal is denominated in, or null when there is nothing to
+ * total or the lines disagree.
+ *
+ * A cart total is a sum of the line prices, so it can only be labelled with the
+ * currency those prices are already in. Nothing here converts between
+ * currencies — the visitor's detected currency describes where they are, not
+ * what anything costs, and stamping it onto an unconverted figure would state a
+ * price that is off by whatever the exchange rate happens to be.
+ */
+export function cartCurrency(lines: readonly CartLine[]): string | null {
+  const first = lines[0];
+  if (!first) return null;
+  return lines.every((line) => line.currency === first.currency) ? first.currency : null;
+}
+
 const sameLine = (line: CartLine, productId: string, size: number): boolean =>
   line.productId === productId && line.size === size;
 

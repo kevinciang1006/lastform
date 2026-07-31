@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { cartSubtotal, useCart } from '@/lib/cart/store';
-import { useClientPrefs } from '@/components/islands/ClientPrefs';
+import { cartCurrency, cartSubtotal, useCart, type CartLine } from '@/lib/cart/store';
+import { CurrencyNote } from '@/components/islands/CurrencyNote';
 import { formatMoney } from '@/lib/format';
 
 /**
@@ -22,10 +22,11 @@ function useHydrated(): boolean {
 
 export function CartLines() {
   const { lines, setQty, remove } = useCart();
-  const { currency } = useClientPrefs();
   const hydrated = useHydrated();
 
   if (!hydrated) return <p className="font-mono text-meta tracking-meta text-slate">READING CART…</p>;
+
+  const priced = cartCurrency(lines);
 
   if (lines.length === 0) {
     return (
@@ -87,7 +88,12 @@ export function CartLines() {
       </ul>
       <div className="flex items-baseline justify-between py-5 font-mono text-meta tracking-meta">
         <span className="text-slate">SUBTOTAL</span>
-        <span className="text-[18px] tracking-value text-ink">{formatMoney(cartSubtotal(lines), currency)}</span>
+        <span className="text-[18px] tracking-value text-ink">
+          {priced === null ? 'MIXED CURRENCIES' : formatMoney(cartSubtotal(lines), priced)}
+        </span>
+      </div>
+      <div className="pb-5">
+        <CurrencyNote priced={priced} />
       </div>
       <Link
         href="/checkout/confirmation"
@@ -101,36 +107,53 @@ export function CartLines() {
 
 /** Shows what was in the cart, then empties it — the order is "placed". */
 export function CheckoutSummary() {
-  const { lines, clear } = useCart();
-  const { currency } = useClientPrefs();
-  const hydrated = useHydrated();
-  const [snapshot] = useState(() => lines);
+  const [snapshot, setSnapshot] = useState<readonly CartLine[] | null>(null);
 
   useEffect(() => {
+    // Read straight off the store rather than through `useCart()`.
+    //
+    // The hook is a `useSyncExternalStore` subscription, and on the render that
+    // hydrates the server HTML it deliberately returns the *server* snapshot —
+    // an empty cart — so that markup matches. Capturing that value is what a
+    // snapshot taken during render gets, and it never updates afterwards, so a
+    // confirmation opened by full page load reported an empty order for a cart
+    // that still had items in it. `getState()` is the live client state.
+    const { lines, clear } = useCart.getState();
+    setSnapshot(lines);
     if (lines.length > 0) clear();
-    // Runs once: the snapshot above is what gets rendered from here on.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!hydrated) return null;
+  // Null until that effect has run, which is also what keeps the hydrating
+  // render identical to the server's.
+  if (snapshot === null) return null;
   if (snapshot.length === 0) {
     return <p className="font-mono text-meta tracking-meta text-slate">NO ITEMS.</p>;
   }
 
+  const priced = cartCurrency(snapshot);
+
   return (
-    <dl className="flex flex-col border-y border-ink">
-      {snapshot.map((line) => (
-        <div key={`${line.productId}-${line.size}`} className="flex justify-between border-b border-fog py-3 font-mono text-meta tracking-meta">
-          <dt className="text-slate">
-            {line.title.toUpperCase()} — EU {line.size} × {line.qty}
-          </dt>
-          <dd className="text-ink">{formatMoney(line.price * line.qty, line.currency)}</dd>
+    <>
+      <dl className="flex flex-col border-y border-ink">
+        {snapshot.map((line) => (
+          <div key={`${line.productId}-${line.size}`} className="flex justify-between border-b border-fog py-3 font-mono text-meta tracking-meta">
+            <dt className="text-slate">
+              {line.title.toUpperCase()} — EU {line.size} × {line.qty}
+            </dt>
+            <dd className="text-ink">{formatMoney(line.price * line.qty, line.currency)}</dd>
+          </div>
+        ))}
+        <div className="flex justify-between py-4 font-mono text-meta tracking-meta">
+          <dt className="text-slate">SUBTOTAL</dt>
+          <dd className="text-[16px] tracking-value text-ink">
+            {priced === null ? 'MIXED CURRENCIES' : formatMoney(cartSubtotal(snapshot), priced)}
+          </dd>
         </div>
-      ))}
-      <div className="flex justify-between py-4 font-mono text-meta tracking-meta">
-        <dt className="text-slate">SUBTOTAL</dt>
-        <dd className="text-[16px] tracking-value text-ink">{formatMoney(cartSubtotal(snapshot), currency)}</dd>
+      </dl>
+      {/* Outside the list: a `dl` may only hold dt/dd groups. */}
+      <div className="pt-4">
+        <CurrencyNote priced={priced} />
       </div>
-    </dl>
+    </>
   );
 }

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { addLine, cartCount, cartSubtotal, removeLine, setLineQty, type CartLine } from '@/lib/cart/store';
+import {
+  addLine,
+  cartCount,
+  cartCurrency,
+  cartSubtotal,
+  removeLine,
+  setLineQty,
+  type CartLine,
+} from '@/lib/cart/store';
 import { isDocumentFresh } from '@/components/islands/ClientPrefs';
 
 const line = (over: Partial<CartLine> = {}): CartLine => ({
@@ -26,6 +34,26 @@ describe('cart maths', () => {
   it('is zero for an empty cart', () => {
     expect(cartCount([])).toBe(0);
     expect(cartSubtotal([])).toBe(0);
+  });
+});
+
+describe('cartCurrency', () => {
+  it('reports the currency the lines are actually priced in', () => {
+    expect(cartCurrency([line(), line({ productId: 'p2' })])).toBe('USD');
+  });
+
+  it('reports whatever the lines carry, not a hardcoded default', () => {
+    expect(cartCurrency([line({ currency: 'SGD' })])).toBe('SGD');
+  });
+
+  it('has no currency for an empty cart', () => {
+    expect(cartCurrency([])).toBeNull();
+  });
+
+  // Nothing converts, so a cart holding two currencies has no single total that
+  // is true. Naming either one would misprice the other.
+  it('refuses to pick one when the lines disagree', () => {
+    expect(cartCurrency([line({ currency: 'USD' }), line({ productId: 'p2', currency: 'SGD' })])).toBeNull();
   });
 });
 
