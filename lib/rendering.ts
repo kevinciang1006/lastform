@@ -102,7 +102,7 @@ export const ROUTES: Readonly<Record<RouteKey, RouteRenderSpec>> = {
     route: '/studio',
     strategy: 'CLIENT',
     revalidate: false,
-    reasoning: 'The embedded Sanity Studio is a client-only application and is excluded from the middleware matcher.',
+    reasoning: 'A static signpost rather than an embedded Studio. Sanity 6 imports useEffectEvent in a way Next 15 will not resolve, so the editor runs standalone via `pnpm sanity dev` against the same schemas.',
     onDemand: false,
   },
   middleware: {
