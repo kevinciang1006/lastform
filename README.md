@@ -88,8 +88,15 @@ keyframes, on the route with the tightest budget.
 
 ```bash
 pnpm install
-pnpm placeholders   # generates the 55 fixture images
 pnpm dev
+```
+
+The 55 fixture photographs are committed, so nothing needs generating. To
+refresh them:
+
+```bash
+pnpm photos         # real photographs from Unsplash (committed by default)
+pnpm placeholders   # the original generated hatch placeholders, if preferred
 ```
 
 It runs entirely on local fixtures with no configuration. Sanity is optional.
@@ -143,6 +150,25 @@ The end-to-end suite includes an axe sweep across seven routes and the open cart
 drawer, at WCAG 2.1 AA. Two things it verified that unit tests could not: the
 size grid is complete in the server HTML with JavaScript disabled, and search
 works without JavaScript because its form is a plain GET.
+
+## Images
+
+The product photographs come from [Unsplash](https://unsplash.com) under the
+[Unsplash License](https://unsplash.com/license) — free to use commercially,
+no permission or attribution required. `public/fixtures/CREDITS.md` lists every
+file and its source photograph anyway.
+
+They are stand-ins, and two things follow from that. They are not photographs of
+the products described, which the credits file states plainly. And the dimension
+callouts on the annotated figure were authored against the design's illustration,
+so their anchor points do not line up meaningfully with a stock photograph —
+real product photography shot to a fixed camera position is what would make
+those leader lines point at the thing they name.
+
+`pnpm photos` pins its photo identifiers rather than discovering them, so a
+rebuild never reshuffles the catalogue. Every identifier was verified to return
+HTTP 200 before being committed: one candidate in the original set was a
+plausible-looking fabrication that 404s.
 
 ## Deploying
 
