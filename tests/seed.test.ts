@@ -249,6 +249,11 @@ describe('seed document structure', () => {
     );
   });
 
+  // Now that these object types are top-level rather than inline, the _type
+  // discriminator is what binds a stored array member back to its schema. Omit
+  // it and the failure is silent: the write succeeds, GROQ still projects the
+  // fields, and the only symptom is a blank row in the Studio and a broken
+  // GraphQL response.
   it('tags array members with the object types the Studio schemas declare', () => {
     const doc = productDocs[0];
     if (!doc) throw new Error('no products');
@@ -259,6 +264,14 @@ describe('seed document structure', () => {
     expect(doc.construction.every((r) => r._type === 'specRow')).toBe(true);
     expect(doc.slug._type).toBe('slug');
     expect(doc.collection._type).toBe('reference');
+  });
+
+  it('tags the footer object types the site settings schema declares', () => {
+    expect(settingsDoc.footerColumns.length).toBeGreaterThan(0);
+    expect(settingsDoc.footerColumns.every((c) => c._type === 'footerColumn')).toBe(true);
+    const links = settingsDoc.footerColumns.flatMap((c) => c.links);
+    expect(links.length).toBeGreaterThan(0);
+    expect(links.every((l) => l._type === 'footerLink')).toBe(true);
   });
 
   it('collects every referenced image exactly once for upload', () => {

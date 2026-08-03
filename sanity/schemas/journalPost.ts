@@ -53,16 +53,7 @@ export const journalPost = defineType({
             }),
           ],
         }),
-        defineArrayMember({
-          type: 'object',
-          name: 'pullQuote',
-          title: 'Pull quote',
-          fields: [
-            defineField({ name: 'quote', title: 'Quote', type: 'text', validation: (Rule) => Rule.required() }),
-            defineField({ name: 'attribution', title: 'Attribution', type: 'string' }),
-          ],
-          preview: { select: { title: 'quote', subtitle: 'attribution' } },
-        }),
+        defineArrayMember({ type: 'pullQuote' }),
       ],
       validation: (Rule) => Rule.required(),
     }),

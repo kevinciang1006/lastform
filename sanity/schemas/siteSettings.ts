@@ -21,42 +21,7 @@ export const siteSettings = defineType({
       name: 'footerColumns',
       title: 'Footer columns',
       type: 'array',
-      of: [
-        defineArrayMember({
-          type: 'object',
-          name: 'footerColumn',
-          fields: [
-            defineField({ name: 'title', title: 'Title', type: 'string', validation: (Rule) => Rule.required() }),
-            defineField({
-              name: 'links',
-              title: 'Links',
-              type: 'array',
-              of: [
-                defineArrayMember({
-                  type: 'object',
-                  name: 'footerLink',
-                  fields: [
-                    defineField({
-                      name: 'label',
-                      title: 'Label',
-                      type: 'string',
-                      validation: (Rule) => Rule.required(),
-                    }),
-                    defineField({
-                      name: 'href',
-                      title: 'Href',
-                      type: 'string',
-                      validation: (Rule) => Rule.required(),
-                    }),
-                  ],
-                  preview: { select: { title: 'label', subtitle: 'href' } },
-                }),
-              ],
-            }),
-          ],
-          preview: { select: { title: 'title' } },
-        }),
-      ],
+      of: [defineArrayMember({ type: 'footerColumn' })],
     }),
     defineField({
       name: 'featuredCollections',

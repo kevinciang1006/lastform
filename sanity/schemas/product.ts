@@ -90,27 +90,7 @@ export const product = defineType({
       name: 'variants',
       title: 'Variants',
       type: 'array',
-      of: [
-        defineArrayMember({
-          type: 'object',
-          name: 'variant',
-          fields: [
-            defineField({
-              name: 'size',
-              title: 'Size',
-              type: 'number',
-              validation: (Rule) => Rule.required().positive(),
-            }),
-            defineField({
-              name: 'stock',
-              title: 'Stock',
-              type: 'number',
-              validation: (Rule) => Rule.required().min(0).integer(),
-            }),
-          ],
-          preview: { select: { title: 'size', subtitle: 'stock' } },
-        }),
-      ],
+      of: [defineArrayMember({ type: 'variant' })],
       validation: (Rule) => Rule.required().min(1),
     }),
     defineField({
@@ -118,61 +98,19 @@ export const product = defineType({
       title: 'Annotations',
       description: 'Callouts for the annotated hero figure. x/y are fractions of the image, 0–1.',
       type: 'array',
-      of: [
-        defineArrayMember({
-          type: 'object',
-          name: 'annotation',
-          fields: [
-            defineField({ name: 'label', title: 'Label', type: 'string', validation: (Rule) => Rule.required() }),
-            defineField({ name: 'value', title: 'Value', type: 'string', validation: (Rule) => Rule.required() }),
-            defineField({
-              name: 'x',
-              title: 'X (0–1)',
-              type: 'number',
-              validation: (Rule) => Rule.required().min(0).max(1),
-            }),
-            defineField({
-              name: 'y',
-              title: 'Y (0–1)',
-              type: 'number',
-              validation: (Rule) => Rule.required().min(0).max(1),
-            }),
-          ],
-          preview: { select: { title: 'label', subtitle: 'value' } },
-        }),
-      ],
+      of: [defineArrayMember({ type: 'annotation' })],
     }),
     defineField({
       name: 'materials',
       title: 'Materials spec rows',
       type: 'array',
-      of: [
-        defineArrayMember({
-          type: 'object',
-          name: 'specRow',
-          fields: [
-            defineField({ name: 'label', title: 'Label', type: 'string', validation: (Rule) => Rule.required() }),
-            defineField({ name: 'value', title: 'Value', type: 'string', validation: (Rule) => Rule.required() }),
-          ],
-          preview: { select: { title: 'label', subtitle: 'value' } },
-        }),
-      ],
+      of: [defineArrayMember({ type: 'specRow' })],
     }),
     defineField({
       name: 'construction',
       title: 'Construction spec rows',
       type: 'array',
-      of: [
-        defineArrayMember({
-          type: 'object',
-          name: 'specRow',
-          fields: [
-            defineField({ name: 'label', title: 'Label', type: 'string', validation: (Rule) => Rule.required() }),
-            defineField({ name: 'value', title: 'Value', type: 'string', validation: (Rule) => Rule.required() }),
-          ],
-          preview: { select: { title: 'label', subtitle: 'value' } },
-        }),
-      ],
+      of: [defineArrayMember({ type: 'specRow' })],
     }),
     defineField({ name: 'featured', title: 'Featured', type: 'boolean', initialValue: false }),
   ],
