@@ -219,11 +219,18 @@ export default function EngineeringPage() {
             </p>
             <p className="max-w-[56ch] text-pretty leading-[1.7] text-slate">
               The difference has teeth. GROQ reads whatever a document holds, so an image field declared inline with
-              its own alt text worked for years of GROQ queries and for schema deployment, which accepted it without
-              a warning — but the extractor does not carry inline fields onto the shared{' '}
+              its own alt text served every GROQ query correctly and passed schema deployment without a warning — but
+              the extractor does not carry inline fields onto the shared{' '}
               <code className="font-mono text-[13px]">Image</code> type, and{' '}
               <code className="font-mono text-[13px]">alt</code> was simply absent from the deployed API. Naming the
               type fixed it. A query model that requires every shape to be named finds the shapes you never named.
+            </p>
+            <p className="max-w-[56ch] text-pretty leading-[1.7] text-slate">
+              What made that expensive was not the missing field but how it failed. The adapter turned the
+              schema&rsquo;s error into an empty result, and an empty result renders as &ldquo;no model by that
+              name&rdquo; — a statement about the catalogue, made on the evidence of a broken query. It survived a
+              deploy and a manual check because it looked exactly like a search that had worked. Transport failures
+              now throw and render as unavailable; only a query that genuinely matched nothing says so.
             </p>
           </article>
           <article className="flex flex-col gap-2">
