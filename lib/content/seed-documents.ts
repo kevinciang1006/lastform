@@ -31,7 +31,10 @@ export interface ReferenceValue {
 }
 
 export interface ImageValue {
-  readonly _type: 'image';
+  // Matches the top-level `imageWithAlt` schema type, not the built-in `image`.
+  // The name is what carries `alt` through GraphQL schema extraction; see
+  // sanity/schemas/objects/imageWithAlt.ts.
+  readonly _type: 'imageWithAlt';
   readonly alt: string;
   readonly asset: ReferenceValue;
 }
@@ -147,7 +150,7 @@ function imageValue(image: ImageRef, assetIds: AssetIds): ImageValue {
   const assetId = assetIds[file];
   if (!assetId) throw new Error(`No uploaded asset for ${file}`);
   return {
-    _type: 'image',
+    _type: 'imageWithAlt',
     alt: image.alt,
     asset: { _type: 'reference', _ref: assetId },
   };

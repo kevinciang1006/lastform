@@ -1,14 +1,24 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PRODUCT_SEARCH_QUERY, graphqlEndpoint, searchProducts } from '@/lib/content/search';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { PRODUCT_SEARCH_QUERY, graphqlEndpoint, searchProducts, SearchUnavailableError } from '@/lib/content/search';
+
+const ENDPOINT = 'https://abc123.api.sanity.io/v2025-09-19/graphql/production/default';
+
+beforeEach(() => {
+  // Silenced, not removed: every failure path below logs, and the assertions on
+  // that logging read the spy rather than the terminal.
+  vi.spyOn(console, 'error').mockImplementation(() => undefined);
+});
 
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 function configured(): void {
   vi.stubEnv('NEXT_PUBLIC_SANITY_PROJECT_ID', 'abc123');
   vi.stubEnv('NEXT_PUBLIC_SANITY_DATASET', 'production');
+  vi.stubEnv('SANITY_GRAPHQL_URL', ENDPOINT);
 }
 
 /** One GraphQL hit shaped as the Sanity GraphQL API returns it. */
@@ -42,14 +52,33 @@ function jsonResponse(body: unknown, status = 200): Response {
 }
 
 describe('graphqlEndpoint', () => {
-  it('builds the documented Sanity GraphQL URL', () => {
+  it('reads the endpoint verbatim from its own variable', () => {
     configured();
-    expect(graphqlEndpoint()).toBe('https://abc123.api.sanity.io/v2023-08-01/graphql/production/default');
+    expect(graphqlEndpoint()).toBe(ENDPOINT);
   });
 
-  it('throws rather than building a nonsense URL when the project is unset', () => {
-    vi.stubEnv('NEXT_PUBLIC_SANITY_PROJECT_ID', '');
-    expect(() => graphqlEndpoint()).toThrow();
+  // The version segment is stamped by Sanity at deploy time and moves on its own
+  // schedule. Deriving it from the GROQ apiVersion requests a version that was
+  // never deployed, which is a 404 -- and used to be an empty result set.
+  it('does not derive the version segment from the GROQ api version', () => {
+    configured();
+    vi.stubEnv('NEXT_PUBLIC_SANITY_API_VERSION', '2024-10-01');
+    expect(graphqlEndpoint()).not.toContain('2024-10-01');
+  });
+
+  it('throws naming the variable when it is unset, rather than defaulting', () => {
+    vi.stubEnv('SANITY_GRAPHQL_URL', '');
+    expect(() => graphqlEndpoint()).toThrow(/SANITY_GRAPHQL_URL/);
+  });
+
+  it('rejects a malformed url', () => {
+    vi.stubEnv('SANITY_GRAPHQL_URL', 'not-a-url');
+    expect(() => graphqlEndpoint()).toThrow(/not a valid URL/);
+  });
+
+  it('rejects a url that is not a graphql endpoint', () => {
+    vi.stubEnv('SANITY_GRAPHQL_URL', 'https://abc123.api.sanity.io/v2025-09-19/data/query/production');
+    expect(() => graphqlEndpoint()).toThrow(/graphql/);
   });
 });
 
@@ -149,19 +178,30 @@ describe('searchProducts', () => {
     expect(body.variables.term).toMatch(/\*/);
   });
 
-  it('returns an empty array when GraphQL reports errors rather than throwing into the page', async () => {
+  /**
+   * These three previously asserted the opposite -- that a failure returns [].
+   * That is the bug: an empty array is a real answer ("nothing matched") and the
+   * page renders it as "No model by that name", so a 404 from an undeployed API
+   * version, an outage, or a query naming a field the deployed schema does not
+   * expose all became a confident claim about the catalogue. The endpoint being
+   * wrong survived a deploy and a manual check for exactly this reason.
+   */
+  it('throws when GraphQL reports errors inside a 200, rather than reporting no results', async () => {
     configured();
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ errors: [{ message: 'boom' }] })));
-    expect(await searchProducts('derby')).toEqual([]);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse({ errors: [{ message: 'Cannot query field "alt" on type "Image".' }] })),
+    );
+    await expect(searchProducts('derby')).rejects.toThrow(/Cannot query field "alt"/);
   });
 
-  it('returns an empty array on a non-OK response', async () => {
+  it('throws on a non-OK response', async () => {
     configured();
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({}, 500)));
-    expect(await searchProducts('derby')).toEqual([]);
+    await expect(searchProducts('derby')).rejects.toBeInstanceOf(SearchUnavailableError);
   });
 
-  it('returns an empty array when the transport throws', async () => {
+  it('throws when the transport fails', async () => {
     configured();
     vi.stubGlobal(
       'fetch',
@@ -169,7 +209,23 @@ describe('searchProducts', () => {
         throw new Error('network down');
       }),
     );
-    expect(await searchProducts('derby')).toEqual([]);
+    await expect(searchProducts('derby')).rejects.toBeInstanceOf(SearchUnavailableError);
+  });
+
+  it('logs the status and the requested url so the failure is diagnosable', async () => {
+    configured();
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({}, 503)));
+    await expect(searchProducts('derby')).rejects.toBeInstanceOf(SearchUnavailableError);
+    const logged = vi.mocked(console.error).mock.calls.flat().join(' ');
+    expect(logged).toContain('503');
+    expect(logged).toContain(ENDPOINT);
+  });
+
+  // The distinction the error states depend on: nothing matched is still [].
+  it('still returns an empty array when the query genuinely matched nothing', async () => {
+    configured();
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ data: { allProduct: [] } })));
+    await expect(searchProducts('nothing-matches-this')).resolves.toEqual([]);
   });
 
   // A single malformed record must not take the whole result set down with it.

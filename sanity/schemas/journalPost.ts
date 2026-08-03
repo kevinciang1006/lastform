@@ -17,16 +17,7 @@ export const journalPost = defineType({
     defineField({
       name: 'coverImage',
       title: 'Cover image',
-      type: 'image',
-      options: { hotspot: true },
-      fields: [
-        defineField({
-          name: 'alt',
-          title: 'Alt text',
-          type: 'string',
-          validation: (Rule) => Rule.required(),
-        }),
-      ],
+      type: 'imageWithAlt',
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -41,18 +32,7 @@ export const journalPost = defineType({
       type: 'array',
       of: [
         defineArrayMember({ type: 'block' }),
-        defineArrayMember({
-          type: 'image',
-          options: { hotspot: true },
-          fields: [
-            defineField({
-              name: 'alt',
-              title: 'Alt text',
-              type: 'string',
-              validation: (Rule) => Rule.required(),
-            }),
-          ],
-        }),
+        defineArrayMember({ type: 'imageWithAlt' }),
         defineArrayMember({ type: 'pullQuote' }),
       ],
       validation: (Rule) => Rule.required(),

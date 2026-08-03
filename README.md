@@ -127,8 +127,18 @@ fallback nobody can see is worse than none, because fixtures render a complete
 catalogue and the site looks healthy while the CMS is disconnected.
 
 `pnpm sanity graphql deploy` is not optional if you want search: the GraphQL
-endpoint does not exist until the schema is deployed, and `/search` returns an
-empty result set until it does.
+endpoint does not exist until the schema is deployed. Afterwards, copy the URL
+that `sanity graphql list` prints into `SANITY_GRAPHQL_URL` — verbatim. Its
+version segment (`v2025-09-19`, say) is stamped by Sanity at deploy time and is
+**not** `NEXT_PUBLIC_SANITY_API_VERSION`; the two look alike, are independent,
+and deriving one from the other requests a version that was never deployed.
+
+Images are declared as the top-level `imageWithAlt` type rather than an inline
+`type: 'image'` with an `alt` field. GROQ serves both identically and schema
+deployment accepts both, but the GraphQL extractor does not carry inline fields
+onto the shared `Image` type — so `alt` was absent from the deployed API and
+querying it failed. Naming the type is what makes the field survive extraction.
+Changing it is a breaking GraphQL change, so redeploying needs `--force`.
 
 **The Studio runs standalone**, via `pnpm sanity dev`. It is not embedded:
 Sanity's structure tool imports `useEffectEvent` as a named export from React,
@@ -180,6 +190,7 @@ rather than the fixture fallback:
 | `NEXT_PUBLIC_SANITY_DATASET` | `production` |
 | `NEXT_PUBLIC_SANITY_API_VERSION` | `2024-10-01` |
 | `SANITY_API_READ_TOKEN` | Viewer permission |
+| `SANITY_GRAPHQL_URL` | Full endpoint from `sanity graphql list`; `/search` fails loudly without it |
 
 No write token in CI: nothing in the pipeline seeds, and a token that can write
 to the production dataset has no business in a workflow triggered by a pull

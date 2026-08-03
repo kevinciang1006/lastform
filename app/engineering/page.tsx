@@ -212,10 +212,18 @@ export default function EngineeringPage() {
           <article className="flex flex-col gap-2">
             <h3 className="font-mono text-meta tracking-eyebrow text-cobalt">GROQ EVERYWHERE, GRAPHQL ONCE</h3>
             <p className="max-w-[56ch] text-pretty leading-[1.7] text-slate">
-              Search is the one route that speaks GraphQL. GROQ projections shape the response so the adapter
-              receives exactly the keys its schema wants; GraphQL returns the document&rsquo;s own field names and the
-              mapping happens in TypeScript. Both paths exist here on purpose, so the difference is visible rather
-              than asserted.
+              Search is the one route that speaks GraphQL, against a deployed endpoint rather than a stand-in. GROQ
+              projections shape the response so the adapter receives exactly the keys its schema wants; GraphQL
+              returns the document&rsquo;s own field names and the mapping happens in TypeScript. Both paths exist
+              here on purpose, so the difference is visible rather than asserted.
+            </p>
+            <p className="max-w-[56ch] text-pretty leading-[1.7] text-slate">
+              The difference has teeth. GROQ reads whatever a document holds, so an image field declared inline with
+              its own alt text worked for years of GROQ queries and for schema deployment, which accepted it without
+              a warning — but the extractor does not carry inline fields onto the shared{' '}
+              <code className="font-mono text-[13px]">Image</code> type, and{' '}
+              <code className="font-mono text-[13px]">alt</code> was simply absent from the deployed API. Naming the
+              type fixed it. A query model that requires every shape to be named finds the shapes you never named.
             </p>
           </article>
           <article className="flex flex-col gap-2">

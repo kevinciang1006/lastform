@@ -3,6 +3,7 @@ import { journalPost } from './journalPost';
 import { annotation } from './objects/annotation';
 import { footerColumn } from './objects/footerColumn';
 import { footerLink } from './objects/footerLink';
+import { imageWithAlt } from './objects/imageWithAlt';
 import { pullQuote } from './objects/pullQuote';
 import { specRow } from './objects/specRow';
 import { variant } from './objects/variant';
@@ -14,6 +15,6 @@ import { siteSettings } from './siteSettings';
 // shape a field uses needs a top-level type here or `sanity graphql deploy`
 // refuses to extract the schema. GROQ never cared, which is why this only
 // surfaced when the GraphQL API was first deployed.
-const objectTypes = [variant, annotation, specRow, pullQuote, footerLink, footerColumn];
+const objectTypes = [imageWithAlt, variant, annotation, specRow, pullQuote, footerLink, footerColumn];
 
 export const schemaTypes = [product, collection, journalPost, siteSettings, ...objectTypes];

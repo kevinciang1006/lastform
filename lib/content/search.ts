@@ -15,18 +15,48 @@ import { productCardSchema, type ProductCard } from '@/lib/content/schema';
  * visitor's results.
  */
 
-/** Pinned separately from the GROQ apiVersion: Sanity versions its GraphQL
- *  endpoint on its own schedule, and this is the version the deployed schema
- *  is generated against by `pnpm sanity graphql deploy`. */
-const GRAPHQL_API_VERSION = 'v2023-08-01';
+/**
+ * Raised when the GraphQL endpoint cannot answer. Distinct from "no products
+ * matched" on purpose: the search page renders the two differently, and
+ * conflating them is what let a broken endpoint look like an empty catalogue.
+ */
+export class SearchUnavailableError extends Error {
+  override readonly name = 'SearchUnavailableError';
+}
 
+/**
+ * The full GraphQL endpoint, read from its own variable rather than assembled
+ * from the GROQ `apiVersion`.
+ *
+ * The version segment in this URL is not the GROQ API version. Sanity stamps it
+ * when `sanity graphql deploy` runs and it moves on Sanity's schedule, not the
+ * application's — deriving one from the other couples two independent values
+ * that merely look alike, and guessing the segment yields a 404. Copy it
+ * verbatim from `sanity graphql list`.
+ *
+ * Server-only: /search is SSR, so this never reaches the client and carries no
+ * NEXT_PUBLIC_ prefix.
+ */
 export function graphqlEndpoint(): string {
-  const projectId = process.env['NEXT_PUBLIC_SANITY_PROJECT_ID'];
-  const dataset = process.env['NEXT_PUBLIC_SANITY_DATASET'] ?? 'production';
-  if (!projectId) {
-    throw new Error('NEXT_PUBLIC_SANITY_PROJECT_ID is required to build the GraphQL endpoint');
+  const url = process.env['SANITY_GRAPHQL_URL'];
+  if (!url) {
+    throw new Error(
+      'SANITY_GRAPHQL_URL is required for /search. Copy the URL from `sanity graphql list` — ' +
+        'its version segment is set by Sanity at deploy time and cannot be derived from NEXT_PUBLIC_SANITY_API_VERSION.',
+    );
   }
-  return `https://${projectId}.api.sanity.io/${GRAPHQL_API_VERSION}/graphql/${dataset}/default`;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error(`SANITY_GRAPHQL_URL is not a valid URL: ${url}`);
+  }
+  if (!/\/graphql\//.test(parsed.pathname)) {
+    throw new Error(
+      `SANITY_GRAPHQL_URL does not look like a Sanity GraphQL endpoint (expected a /graphql/ path segment): ${url}`,
+    );
+  }
+  return url;
 }
 
 /**
@@ -124,9 +154,16 @@ export async function searchProducts(term: string): Promise<ProductCard[]> {
     return fixtureSource().searchProducts(needle);
   }
 
-  let payload: GraphQlResponse;
+  const endpoint = graphqlEndpoint();
+
+  // Every failure below throws rather than returning []. An empty array is a
+  // real answer — "nothing matched" — and returning it for a 404, an outage or
+  // a schema mismatch makes a broken endpoint indistinguishable from a search
+  // that genuinely found nothing. That is precisely how a query against an
+  // undeployed API version survived a deploy and a manual check unnoticed.
+  let response: Response;
   try {
-    const response = await fetch(graphqlEndpoint(), {
+    response = await fetch(endpoint, {
       method: 'POST',
       cache: 'no-store',
       headers: { 'content-type': 'application/json' },
@@ -135,15 +172,26 @@ export async function searchProducts(term: string): Promise<ProductCard[]> {
         variables: { term: `*${needle}*` },
       }),
     });
-    if (!response.ok) return [];
-    payload = (await response.json()) as GraphQlResponse;
-  } catch {
-    // A CMS outage degrades to an empty result set rather than a 500 on a
-    // route whose only job is answering a query.
-    return [];
+  } catch (cause) {
+    console.error(`[search] request to ${endpoint} failed`, cause);
+    throw new SearchUnavailableError(`Search request to ${endpoint} failed`, { cause });
   }
 
-  if (payload.errors && payload.errors.length > 0) return [];
+  if (!response.ok) {
+    console.error(`[search] ${endpoint} responded ${response.status} ${response.statusText}`);
+    throw new SearchUnavailableError(`Search endpoint returned ${response.status} for ${endpoint}`);
+  }
+
+  const payload = (await response.json()) as GraphQlResponse;
+
+  // A GraphQL error arrives inside a 200: a field the deployed schema does not
+  // expose is reported here, not in the status code. Skipping this check is
+  // what turned `Cannot query field "alt" on type "Image"` into zero results.
+  if (payload.errors && payload.errors.length > 0) {
+    const detail = payload.errors.map((e) => e.message ?? 'unknown error').join('; ');
+    console.error(`[search] ${endpoint} returned GraphQL errors: ${detail}`);
+    throw new SearchUnavailableError(`Search query rejected by the schema: ${detail}`);
+  }
 
   return (payload.data?.allProduct ?? [])
     .map(toCard)

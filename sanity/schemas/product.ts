@@ -64,20 +64,7 @@ export const product = defineType({
       name: 'images',
       title: 'Images',
       type: 'array',
-      of: [
-        defineArrayMember({
-          type: 'image',
-          options: { hotspot: true },
-          fields: [
-            defineField({
-              name: 'alt',
-              title: 'Alt text',
-              type: 'string',
-              validation: (Rule) => Rule.required(),
-            }),
-          ],
-        }),
-      ],
+      of: [defineArrayMember({ type: 'imageWithAlt' })],
       validation: (Rule) => Rule.required().min(1),
     }),
     defineField({

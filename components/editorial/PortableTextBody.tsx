@@ -63,9 +63,18 @@ const components: PortableTextComponents = {
         )}
       </figure>
     ),
-    image: ({ value }: { value: EditorialImageValue }) => {
-      if (value.url === undefined) return null;
-      return (
+    // Keyed on the schema type name, which is `imageWithAlt` rather than the
+    // built-in `image` — naming it is what carries `alt` through GraphQL schema
+    // extraction. `image` stays as an alias so body content written before the
+    // rename still renders rather than silently disappearing.
+    imageWithAlt: ({ value }: { value: EditorialImageValue }) => renderEditorialImage(value),
+    image: ({ value }: { value: EditorialImageValue }) => renderEditorialImage(value),
+  },
+};
+
+function renderEditorialImage(value: EditorialImageValue) {
+  if (value.url === undefined) return null;
+  return (
         <figure className="my-4">
           <div className="relative aspect-[16/9] bg-fog/30">
             {/* eslint-disable-next-line @next/next/no-img-element -- editorial
@@ -78,9 +87,7 @@ const components: PortableTextComponents = {
           )}
         </figure>
       );
-    },
-  },
-};
+}
 
 export function PortableTextBody({ value }: { readonly value: readonly PortableTextBlock[] }) {
   if (value.length === 0) return null;

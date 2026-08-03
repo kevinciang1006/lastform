@@ -257,7 +257,7 @@ describe('seed document structure', () => {
   it('tags array members with the object types the Studio schemas declare', () => {
     const doc = productDocs[0];
     if (!doc) throw new Error('no products');
-    expect(doc.images.every((i) => i._type === 'image')).toBe(true);
+    expect(doc.images.every((i) => i._type === 'imageWithAlt')).toBe(true);
     expect(doc.variants.every((v) => v._type === 'variant')).toBe(true);
     expect(doc.annotations.every((a) => a._type === 'annotation')).toBe(true);
     expect(doc.materials.every((r) => r._type === 'specRow')).toBe(true);

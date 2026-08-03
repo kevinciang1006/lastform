@@ -16,16 +16,7 @@ export const collection = defineType({
     defineField({
       name: 'heroImage',
       title: 'Hero image',
-      type: 'image',
-      options: { hotspot: true },
-      fields: [
-        defineField({
-          name: 'alt',
-          title: 'Alt text',
-          type: 'string',
-          validation: (Rule) => Rule.required(),
-        }),
-      ],
+      type: 'imageWithAlt',
       validation: (Rule) => Rule.required(),
     }),
     defineField({ name: 'blurb', title: 'Blurb', type: 'text', validation: (Rule) => Rule.required() }),
