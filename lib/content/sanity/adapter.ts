@@ -23,6 +23,15 @@ import {
   type ProductListResult,
   type RelatedProducts,
 } from '@/lib/content/source';
+import {
+  collectionTag,
+  journalTag,
+  productTag,
+  COLLECTIONS as COLLECTIONS_TAG,
+  JOURNAL as JOURNAL_TAG,
+  PRODUCTS as PRODUCTS_TAG,
+  SETTINGS as SETTINGS_TAG,
+} from '@/lib/content/tags';
 import { sanityClient } from './client';
 import { imageRefFrom } from './image';
 import {
@@ -83,7 +92,7 @@ function journalPostFromRaw(raw: RawJournalPost): unknown {
  * re-deriving equivalent behaviour in GROQ.
  */
 async function fetchAllProducts(): Promise<Product[]> {
-  const rows = await sanityClient().fetch<RawProduct[]>(ALL_PRODUCTS_QUERY, {}, { next: { tags: ['product'] } });
+  const rows = await sanityClient().fetch<RawProduct[]>(ALL_PRODUCTS_QUERY, {}, { next: { tags: [PRODUCTS_TAG] } });
   return rows.map((row) => productSchema.parse(productFromRaw(row)));
 }
 
@@ -102,7 +111,7 @@ export function sanitySource(): ContentSource {
   return {
     async listCollections(): Promise<CollectionCard[]> {
       const [rawCollections, products] = await Promise.all([
-        sanityClient().fetch<RawCollection[]>(COLLECTIONS_QUERY),
+        sanityClient().fetch<RawCollection[]>(COLLECTIONS_QUERY, {}, { next: { tags: [COLLECTIONS_TAG] } }),
         fetchAllProducts(),
       ]);
       return rawCollections.map((raw) => {
@@ -119,12 +128,20 @@ export function sanitySource(): ContentSource {
     },
 
     async getCollection(slug) {
-      const raw = await sanityClient().fetch<RawCollection | null>(COLLECTION_BY_SLUG_QUERY, { slug });
+      const raw = await sanityClient().fetch<RawCollection | null>(
+        COLLECTION_BY_SLUG_QUERY,
+        { slug },
+        { next: { tags: [COLLECTIONS_TAG, collectionTag(slug)] } },
+      );
       return raw ? collectionSchema.parse(collectionFromRaw(raw)) : null;
     },
 
     async getCollectionSlugs() {
-      const rows = await sanityClient().fetch<{ slug: string }[]>(COLLECTION_SLUGS_QUERY);
+      const rows = await sanityClient().fetch<{ slug: string }[]>(
+        COLLECTION_SLUGS_QUERY,
+        {},
+        { next: { tags: [COLLECTIONS_TAG] } },
+      );
       return slugListSchema.parse(rows.map((r) => r.slug));
     },
 
@@ -137,8 +154,8 @@ export function sanitySource(): ContentSource {
       const scope = productListQuery({ ...query, sizes: [], colours: [], materials: [], priceBand: null });
 
       const [rawItems, rawScope] = await Promise.all([
-        sanityClient().fetch<RawProductCard[]>(items.query, items.params, { next: { tags: ['product'] } }),
-        sanityClient().fetch<RawProductCard[]>(scope.query, scope.params, { next: { tags: ['product'] } }),
+        sanityClient().fetch<RawProductCard[]>(items.query, items.params, { next: { tags: [PRODUCTS_TAG] } }),
+        sanityClient().fetch<RawProductCard[]>(scope.query, scope.params, { next: { tags: [PRODUCTS_TAG] } }),
       ]);
 
       const parsedItems = rawItems.map((row) => productCardSchema.parse(cardFromRaw(row)));
@@ -151,18 +168,26 @@ export function sanitySource(): ContentSource {
       const raw = await sanityClient().fetch<RawProduct | null>(
         PRODUCT_BY_SLUG_QUERY,
         { slug },
-        { next: { tags: ['product', `product:${slug}`] } },
+        { next: { tags: [PRODUCTS_TAG, productTag(slug)] } },
       );
       return raw ? productSchema.parse(productFromRaw(raw)) : null;
     },
 
     async getProductSlugs() {
-      const rows = await sanityClient().fetch<{ slug: string }[]>(PRODUCT_SLUGS_QUERY);
+      const rows = await sanityClient().fetch<{ slug: string }[]>(
+        PRODUCT_SLUGS_QUERY,
+        {},
+        { next: { tags: [PRODUCTS_TAG] } },
+      );
       return slugListSchema.parse(rows.map((r) => r.slug));
     },
 
     async getFeaturedProduct() {
-      const raw = await sanityClient().fetch<RawProduct | null>(FEATURED_PRODUCT_QUERY, {}, { next: { tags: ['product'] } });
+      const raw = await sanityClient().fetch<RawProduct | null>(
+        FEATURED_PRODUCT_QUERY,
+        {},
+        { next: { tags: [PRODUCTS_TAG] } },
+      );
       return raw ? productSchema.parse(productFromRaw(raw)) : null;
     },
 
@@ -198,22 +223,38 @@ export function sanitySource(): ContentSource {
     },
 
     async listJournalPosts(): Promise<JournalPost[]> {
-      const rows = await sanityClient().fetch<RawJournalPost[]>(JOURNAL_LIST_QUERY);
+      const rows = await sanityClient().fetch<RawJournalPost[]>(
+        JOURNAL_LIST_QUERY,
+        {},
+        { next: { tags: [JOURNAL_TAG] } },
+      );
       return rows.map((row) => journalPostSchema.parse(journalPostFromRaw(row)));
     },
 
     async getJournalPost(slug) {
-      const raw = await sanityClient().fetch<RawJournalPost | null>(JOURNAL_BY_SLUG_QUERY, { slug });
+      const raw = await sanityClient().fetch<RawJournalPost | null>(
+        JOURNAL_BY_SLUG_QUERY,
+        { slug },
+        { next: { tags: [JOURNAL_TAG, journalTag(slug)] } },
+      );
       return raw ? journalPostSchema.parse(journalPostFromRaw(raw)) : null;
     },
 
     async getJournalSlugs() {
-      const rows = await sanityClient().fetch<{ slug: string }[]>(JOURNAL_SLUGS_QUERY);
+      const rows = await sanityClient().fetch<{ slug: string }[]>(
+        JOURNAL_SLUGS_QUERY,
+        {},
+        { next: { tags: [JOURNAL_TAG] } },
+      );
       return slugListSchema.parse(rows.map((r) => r.slug));
     },
 
     async getSiteSettings(): Promise<SiteSettings> {
-      const raw = await sanityClient().fetch<RawSiteSettings | null>(SITE_SETTINGS_QUERY);
+      const raw = await sanityClient().fetch<RawSiteSettings | null>(
+        SITE_SETTINGS_QUERY,
+        {},
+        { next: { tags: [SETTINGS_TAG] } },
+      );
       // A missing singleton — unseeded, or between provisioning a project and
       // running the Task 12 seed script — falls back to the same known-good
       // chrome fixtures use, rather than throwing on every route until
@@ -241,7 +282,7 @@ export function sanitySource(): ContentSource {
         priceBand: null,
         sort: 'featured',
       });
-      const rows = await sanityClient().fetch<RawProductCard[]>(query, params);
+      const rows = await sanityClient().fetch<RawProductCard[]>(query, params, { next: { tags: [PRODUCTS_TAG] } });
       const cards = rows.map((row) => productCardSchema.parse(cardFromRaw(row)));
       return cards.filter((c) => c.title.toLowerCase().includes(needle));
     },

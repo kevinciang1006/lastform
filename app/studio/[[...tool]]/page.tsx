@@ -19,10 +19,18 @@ export default function StudioPage() {
           The Studio runs alongside
         </h1>
         <p className="mt-6 text-pretty leading-[1.7]">
-          The editing interface is not embedded in this application. Sanity&rsquo;s Studio currently imports React&rsquo;s{' '}
-          <code className="font-mono text-[13px]">useEffectEvent</code> in a way that does not resolve against the
-          React copy Next.js aliases into its client bundle, and the available fixes — pinning Sanity back, patching
-          module resolution, or tracking a React canary — all trade a working application for an editing screen.
+          The editing interface is not embedded in this application. Mounting it with{' '}
+          <code className="font-mono text-[13px]">NextStudio</code> on a static wrapper fails the production build:
+          Sanity&rsquo;s structure tool imports <code className="font-mono text-[13px]">useEffectEvent</code> as a
+          named export from React, and webpack cannot resolve that name against the React copy Next aliases into the
+          client bundle. React 19.2.8 does export it at runtime — the import is unresolvable, not absent — so the
+          available fixes are patching module resolution or tracking a React canary, and both trade a working
+          application for an editing screen.
+        </p>
+        <p className="mt-4 text-pretty leading-[1.7]">
+          Tested on sanity 5.31.1, next-sanity 12.4.5, Next 15.5.22 and React 19.2.8. The versions are pinned rather
+          than current: next-sanity 12.4.5 declares a peer dependency on Next 16, which this application is
+          deliberately not on, so its Studio integration is running outside the range it was published against.
         </p>
         <p className="mt-4 text-pretty leading-[1.7]">
           The schemas still live in this repository under{' '}

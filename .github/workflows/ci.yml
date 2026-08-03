@@ -9,6 +9,16 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    # Sanity credentials, so the build and the end-to-end suite exercise the
+    # live dataset rather than the fixture fallback. Absent (on a fork, or
+    # before the secrets are added) every step still passes: contentSource()
+    # degrades to fixtures and the Sanity-specific spec skips itself rather
+    # than failing for a reason that is not the code's fault.
+    env:
+      NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+      NEXT_PUBLIC_SANITY_DATASET: ${{ secrets.NEXT_PUBLIC_SANITY_DATASET }}
+      NEXT_PUBLIC_SANITY_API_VERSION: ${{ secrets.NEXT_PUBLIC_SANITY_API_VERSION }}
+      SANITY_API_READ_TOKEN: ${{ secrets.SANITY_API_READ_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4

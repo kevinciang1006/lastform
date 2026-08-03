@@ -111,16 +111,34 @@ pnpm seed                      # writes the fixture dataset into Sanity
 pnpm sanity graphql deploy     # required, or /search returns nothing
 ```
 
+`pnpm seed` uploads the 55 fixture photographs as Sanity assets and writes 32
+documents — 24 products, 4 collections, 3 journal posts and the settings
+singleton. It is safe to re-run: document `_id`s are derived from slugs and
+written with `createOrReplace`, and images are matched on content hash before
+upload, so a second run reports `0 uploaded, 55 reused` and creates nothing.
+(Those 55 filenames resolve to 39 distinct assets; eight of the secondary
+photographs are byte-identical and Sanity dedups them.)
+
 The adapter selects itself on `NEXT_PUBLIC_SANITY_PROJECT_ID` being present, so
 a misconfigured deploy degrades to fixtures rather than throwing at request time.
+That degradation is deliberately loud: the server logs a warning at startup and
+`/engineering` reports `SOURCE — FIXTURES — FALLBACK` in its build block. A
+fallback nobody can see is worse than none, because fixtures render a complete
+catalogue and the site looks healthy while the CMS is disconnected.
 
 `pnpm sanity graphql deploy` is not optional if you want search: the GraphQL
-endpoint does not exist until the schema is deployed.
+endpoint does not exist until the schema is deployed, and `/search` returns an
+empty result set until it does.
 
-**The Studio runs standalone**, via `pnpm sanity dev`. It is not embedded —
-Sanity 6 imports React's `useEffectEvent` in a way that does not resolve against
-the React copy Next 15 aliases into its client bundle. `/studio` in this app is a
-page that says so.
+**The Studio runs standalone**, via `pnpm sanity dev`. It is not embedded:
+Sanity's structure tool imports `useEffectEvent` as a named export from React,
+and webpack cannot resolve that name against the React copy Next aliases into
+the client bundle — React 19.2.8 does export it at runtime, so the import is
+unresolvable rather than absent. Tested on sanity 5.31.1, next-sanity 12.4.5,
+Next 15.5.22 and React 19.2.8. `/studio` in this app is a page that says so.
+
+Versions are pinned rather than current: next-sanity 12.4.5 declares a peer
+dependency on Next 16, which this application is deliberately not on.
 
 ### On-demand revalidation
 
@@ -129,11 +147,44 @@ In the Sanity dashboard, add a webhook:
 - **URL** `https://<your-domain>/api/revalidate`
 - **Trigger on** create, update, delete
 - **Filter** `_type in ["product", "journalPost", "collection", "siteSettings"]`
-- **Projection** `{_type, "slug": slug.current, "collectionSlug": collection->slug.current}`
+- **Projection** `{_type, "slug": slug.current}`
 - **Secret** the same value as `SANITY_REVALIDATE_SECRET`
 
 The signature is verified over the raw request body, so the route reads bytes
-before parsing.
+before parsing. Unsigned requests, wrong-secret signatures and bodies modified
+after signing are all rejected with 401; an unknown `_type` is rejected with 400.
+
+The route purges **cache tags**, not paths. Every cached read declares what it
+depended on — a product list tags `product`, a single product page also tags
+`product:<slug>` — so this route never needs to know which pages render which
+documents. It answers with the tags it purged, so the delivery log in Sanity
+shows what a publish actually invalidated:
+
+```json
+{ "revalidated": ["product", "product:grain-derby-04"], "type": "product" }
+```
+
+Deletes carry a `_type` but usually no slug, so they fall back to the collective
+tag, which is what removes the document from every list it appeared in.
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs typecheck, lint, unit tests, build, and the
+end-to-end and axe suites on every push. Add these as **repository secrets**
+(Settings → Secrets and variables → Actions) so CI exercises the live dataset
+rather than the fixture fallback:
+
+| Secret | Notes |
+| --- | --- |
+| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Not sensitive — it ships in the client bundle — but kept as a secret so forks build in fixture mode |
+| `NEXT_PUBLIC_SANITY_DATASET` | `production` |
+| `NEXT_PUBLIC_SANITY_API_VERSION` | `2024-10-01` |
+| `SANITY_API_READ_TOKEN` | Viewer permission |
+
+No write token in CI: nothing in the pipeline seeds, and a token that can write
+to the production dataset has no business in a workflow triggered by a pull
+request. Without these, every step still passes — the site builds from fixtures
+and `e2e/sanity-source.spec.ts` skips rather than fails.
 
 ## Verifying
 

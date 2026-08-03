@@ -102,7 +102,7 @@ export const ROUTES: Readonly<Record<RouteKey, RouteRenderSpec>> = {
     route: '/studio',
     strategy: 'CLIENT',
     revalidate: false,
-    reasoning: 'A static signpost rather than an embedded Studio. Sanity 6 imports useEffectEvent in a way Next 15 will not resolve, so the editor runs standalone via `pnpm sanity dev` against the same schemas.',
+    reasoning: 'A static signpost rather than an embedded Studio. Sanity 5.31.1 imports useEffectEvent as a named export that Next 15 will not resolve in a client bundle, so the editor runs standalone via `pnpm sanity dev` against the same schemas.',
     onDemand: false,
   },
   middleware: {

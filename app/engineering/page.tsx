@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { PageShell } from '@/components/chrome/PageShell';
 import { VitalsReporter } from '@/components/islands/VitalsReporter';
 import { BUILD_INFO } from '@/lib/build-info';
+import { contentSourceKind } from '@/lib/content';
 import { ROUTES, routeCounts, type RouteRenderSpec } from '@/lib/rendering';
 
 // Generated from the route manifest at build time, so it cannot describe a
@@ -49,9 +50,15 @@ function RouteTable() {
 
 function BuildFacts() {
   const counts = routeCounts();
+  // Read at build time, which is the honest scope for a build-facts block: if
+  // this build had no project id, every prerendered page in it came from
+  // fixtures. A fallback that is invisible is worse than no fallback, because
+  // the site looks healthy either way.
+  const source = contentSourceKind();
   const facts: readonly [string, string][] = [
     ['COMMIT', BUILD_INFO.commit],
     ['BUILT', BUILD_INFO.builtAt === '' ? 'UNKNOWN' : BUILD_INFO.builtAt.replace('T', ' ').replace(/\..+$/, ' UTC')],
+    ['SOURCE', source === 'sanity' ? 'SANITY' : 'FIXTURES — FALLBACK'],
     ['ROUTES', `${counts.static} CACHED / ${counts.dynamic} PER-REQUEST`],
     ['ISLANDS', '7 CLIENT COMPONENTS'],
   ];
@@ -88,6 +95,12 @@ export default function EngineeringPage() {
             Each route is cached at the shortest interval its data tolerates and no longer. Stock is the only value
             read per request. The table below is generated from the same constant the render badge in every footer
             reads, so it cannot describe a plan the site is not running.
+          </p>
+          <p className="max-w-[56ch] text-pretty leading-[1.7] text-slate">
+            Content comes from Sanity, read over GROQ and validated at the boundary. A typed fixture adapter stands
+            behind it: a deploy missing its project credentials degrades to built-in content instead of failing, and
+            a parity test asserts the two adapters answer every method identically, so the fallback cannot quietly
+            drift from the real thing. Which one this build read is in the SOURCE row.
           </p>
         </div>
         <div className="flex flex-col gap-[14px] bg-fog/40 px-[34px] py-14">
@@ -167,7 +180,7 @@ export default function EngineeringPage() {
 
       <section className="flex flex-col gap-5 border-t border-ink px-10 py-14">
         <h2 className="font-display text-[28px] font-extrabold tracking-[-0.02em] uppercase [font-variation-settings:'wdth'_110]">
-          Four decisions worth defending
+          Five decisions worth defending
         </h2>
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           <article className="flex flex-col gap-2">
@@ -203,6 +216,23 @@ export default function EngineeringPage() {
               receives exactly the keys its schema wants; GraphQL returns the document&rsquo;s own field names and the
               mapping happens in TypeScript. Both paths exist here on purpose, so the difference is visible rather
               than asserted.
+            </p>
+          </article>
+          <article className="flex flex-col gap-2">
+            <h3 className="font-mono text-meta tracking-eyebrow text-cobalt">PUBLISHING PURGES TAGS, NOT PATHS</h3>
+            <p className="max-w-[56ch] text-pretty leading-[1.7] text-slate">
+              Every cached read declares what it depended on: a product list tags <code className="font-mono text-[13px]">product</code>,
+              a single product page also tags <code className="font-mono text-[13px]">product:its-slug</code>. The
+              webhook purges tags rather than a list of URLs, so it never has to know which pages render which
+              documents — a new route that reads a product cannot forget to invalidate itself, because the
+              dependency is recorded where the read happens rather than in a switch statement somewhere else.
+            </p>
+            <p className="max-w-[56ch] text-pretty leading-[1.7] text-slate">
+              Publishing one product therefore drops that product&rsquo;s page and every list it appears in. It also
+              drops the other product pages — not over-eagerness: each one renders a related-products strip built
+              from the whole catalogue, so a price change really does make them stale. The precise claim is not
+              &ldquo;only what changed&rdquo; but everything whose output depends on what changed, which is the
+              stronger property and the one a cache can actually guarantee.
             </p>
           </article>
         </div>
